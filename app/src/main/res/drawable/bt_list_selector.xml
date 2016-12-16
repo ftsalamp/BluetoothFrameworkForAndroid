@@ -1,0 +1,17 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <!-- State when a row is being pressed, but hasn't yet been activated (finger down) -->
+    <item android:state_pressed="true"
+        android:drawable="@color/transparent" />
+
+    <item android:state_selected="true" android:drawable="@drawable/list_item_bg_normal"/>
+
+    <!-- When the view is "activated".  In SINGLE_CHOICE_MODE, it flags the active row
+         of a ListView -->
+    <item android:state_activated="true"
+        android:drawable="@drawable/list_item_bg_normal" />
+
+    <item android:drawable="@color/transparent"/>
+
+</selector>

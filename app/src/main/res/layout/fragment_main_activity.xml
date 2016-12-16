@@ -1,0 +1,64 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    tools:context="grioanpier.auth.users.bluetoothframework.ChatRoom$PlaceholderFragment"
+    >
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/hostgame_button"
+        android:id="@+id/hostgame_button"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/select_host_device"
+        android:id="@+id/select_hosts_device"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/join_button"
+        android:id="@+id/join_button"
+        android:layout_above="@id/hostgame_button"
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/spectate_button"
+        android:id="@+id/spectate_button"
+        android:layout_above="@+id/hostgame_button"
+        android:layout_centerHorizontal="true" />
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/refresh_button"
+        android:id="@+id/refresh_button"
+        android:layout_above="@id/hostgame_button"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/pairedDevicesList"
+        android:layout_below="@id/select_hosts_device"
+        android:layout_above="@id/spectate_button"
+        android:dividerHeight="0dp"
+        android:listSelector="@color/transparent"
+        />
+
+
+</RelativeLayout>
