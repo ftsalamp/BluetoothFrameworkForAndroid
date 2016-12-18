@@ -309,7 +309,7 @@ public class ApplicationHelper extends Application {
 
             byte[] buffer = builder.toString().getBytes();
 
-            //It's the host turn. This method is only called by the host, therefor send it directly to the host's Handler
+            //It's the host's turn. This method is only called by the host, therefore send it directly to the host's Handler
             if (threadIndex == -1)
                 applicationHandler.obtainMessage(THREAD_READ, buffer.length, -1, buffer).sendToTarget();
             else
@@ -358,7 +358,7 @@ public class ApplicationHelper extends Application {
                     Log.i(LOG_TAG, "Message received: " + new String((byte[]) msg.obj, 0, msg.arg1));
                     int numOfBytes = msg.arg1;
                     String message = new String((byte[]) msg.obj, 0, numOfBytes);
-
+                    //message=[message code][name length][length][actual message]
                     int length = deformat(message);
                     int source = Integer.valueOf(message.substring(3, length + 3));
                     message = message.substring(length + 3, message.length());
@@ -369,7 +369,7 @@ public class ApplicationHelper extends Application {
                     for (Handler handler : mHandlers.values())
                         handler.obtainMessage(source, message).sendToTarget();
 
-                    //If this isn't meant for just on person, also relay it to the other devices.
+                    //If this isn't meant for just one person, also relay it to the other devices.
                     if (ApplicationHelper.getInstance().isHost && source!=SINGLE_RECEIVER )
                         mSocketManagerService.writeToAll(format(Integer.toString(source)) + message);
 
@@ -395,7 +395,7 @@ public class ApplicationHelper extends Application {
                         who = "The host";
 
                         //Wrap up the game
-                        ApplicationHelper.getInstance().GAME_HAS_STARTED = false;
+                        ApplicationHelper.GAME_HAS_STARTED = false;
                         ApplicationHelper.getInstance().prepareNewGame();
 
                         //TODO force story save

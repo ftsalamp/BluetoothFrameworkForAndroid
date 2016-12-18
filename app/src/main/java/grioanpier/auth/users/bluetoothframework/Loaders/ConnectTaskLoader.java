@@ -14,6 +14,7 @@ import java.util.UUID;
  * It listens for 1 UUID at every time and as soon as a connection is initialized, it moves to the next.
  */
 public class ConnectTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
+    //TODO this should be called via @link{BluetoothManager}
     private static final String LOG_TAG = ConnectTaskLoader.class.getSimpleName();
     private final BluetoothDevice mBtDevice;
     private final UUID[] mUUIDs;
