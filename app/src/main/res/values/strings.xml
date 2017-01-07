@@ -1,15 +1,11 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">BluetoothFramework</string>
     <string name="ensure_discoverable">Ensure Discoverable</string>
-    <string name="save_story">Save the Story</string>
     <string name="playersJoined">There are <xliff:g id="number" example="5">%d</xliff:g> people in the room.</string>
     <string name="your_mac_is">Your MAC:  <xliff:g id="string" example="XX:XX:XX:XX:XX:XX">%s</xliff:g></string>
-    <string name="waitingForHost">Waiting for the host to start the game. </string>
-    <string name="startgame_button">Start the Game</string>
-    <string name="resume_story">To the Story!</string>
     <string name="select_host_device">Select the host\'s device</string>
-    <string name="hostgame_button">Host Game</string>
+    <string name="hostgame_button">Host chat room</string>
     <string name="join_button">Join</string>
-    <string name="spectate_button">Spectate</string>
-    <string name="refresh_button">Refresh</string>
+    <string name="refresh_button">Refresh list</string>
+
 </resources>

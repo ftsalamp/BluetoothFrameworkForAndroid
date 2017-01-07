@@ -1,10 +1,11 @@
-package grioanpier.auth.users.bluetoothframework.Loaders;
+package grioanpier.auth.users.bluetoothframework.loaders;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -54,6 +55,7 @@ public class ConnectTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
         //Cycles through the available UUIDs and tries to connect to the specified device
         int index=0;
         do{
+            Log.e(LOG_TAG, "Trying (" +index+ ")to connect to bluetooth socket");
             try {
                 Thread.sleep(100);
                 btSocket = mBtDevice.createRfcommSocketToServiceRecord(mUUIDs[index]);

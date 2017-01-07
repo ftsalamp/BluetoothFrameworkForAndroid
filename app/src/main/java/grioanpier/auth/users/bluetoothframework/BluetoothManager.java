@@ -7,16 +7,24 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
+import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 
-import grioanpier.auth.users.bluetoothframework.Loaders.AcceptTaskLoader;
+import grioanpier.auth.users.bluetoothframework.loaders.AcceptTaskLoader;
+import grioanpier.auth.users.bluetoothframework.loaders.ConnectTaskLoader;
 
 /**
  * A {@link Fragment} that contains various useful methods regarding the Bluetooth.
@@ -25,7 +33,22 @@ public class BluetoothManager extends Fragment {
 
     private static final String LOG_TAG = BluetoothManager.class.getSimpleName();
     private static final int ACCEPT_LOADER = 0;
-    private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+    private static final int CONNECT_LOADER = 1;
+    //The device that we want to connect to. Shouldn't be used anywhere else except for the ConnectLoader
+    private BluetoothDevice connectedDevice = null;
+
+
+    private static final ArrayList<UUID> sAvailableUUIDs = new ArrayList<>(Arrays.asList(Constants.sUUIDs));
+    private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+    private SocketManagerService mService;
+    private boolean mBound = false;
+
+    private static final int UNDEFINED = -1;
+    public static final int PLAYER = 0;
+    public static final int HOST = 1;
+    public static int DEVICE_TYPE = UNDEFINED;
 
     //Possible values for resultCode that is passed on the onActivityResult
     private final static int RESULT_CANCELED = Activity.RESULT_CANCELED;
@@ -35,16 +58,12 @@ public class BluetoothManager extends Fragment {
     private final static String ACTION_DISCOVERY_STARTED = BluetoothAdapter.ACTION_DISCOVERY_STARTED;
     private final static String ACTION_DISCOVERY_FINISHED = BluetoothAdapter.ACTION_DISCOVERY_FINISHED;
 
-    private final static int SCAN_MODE_CONNECTABLE = BluetoothAdapter.SCAN_MODE_CONNECTABLE;
-    private final static int SCAN_MODE_CONNECTABLE_DISCOVERABLE = BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE;
-
     private final static String ACTION_STATE_CHANGED = BluetoothAdapter.ACTION_STATE_CHANGED;
     private final static String EXTRA_STATE = BluetoothAdapter.EXTRA_STATE;
     private final static int STATE_OFF = BluetoothAdapter.STATE_OFF;
     private final static int STATE_TURNING_ON = BluetoothAdapter.STATE_TURNING_ON;
     private final static int STATE_ON = BluetoothAdapter.STATE_ON;
     private final static int STATE_TURNING_OFF = BluetoothAdapter.STATE_TURNING_OFF;
-
 
     //Locally defined ints that the system passes back to me in the onActivityResult() implementation as the requestCode parameter.
     private final static int REQUEST_ENABLE_BLUETOOTH = 1;
@@ -63,7 +82,7 @@ public class BluetoothManager extends Fragment {
         return BluetoothAdapter.getDefaultAdapter().isEnabled();
     }
 
-    public String getName() {
+    public static String getName() {
         if (mBluetoothAdapter != null)
             return mBluetoothAdapter.getName();
         else
@@ -72,10 +91,11 @@ public class BluetoothManager extends Fragment {
 
     /**
      * Returns the MAC address of the device.
-     * Note that using device identifiers is not recommended other than for high value fraud prevention and advanced telephony use-cases.
+     *
      * @return the MAC address of the device
      */
-    public String getMACAddress() {
+    //TODO in android 6 this has been deprecated and is unusable.
+    public static String getMACAddress() {
         if (mBluetoothAdapter != null)
             return mBluetoothAdapter.getAddress();
         else
@@ -106,7 +126,7 @@ public class BluetoothManager extends Fragment {
         }
     }
 
-    //Request that Bluetooth is enabled and call getDevices()
+    //Request that Bluetooth is enabled
     public void ensureEnabled() {
         if (mBluetoothAdapter.isEnabled()) {
             if (bluetoothRequestEnableListener != null)
@@ -194,13 +214,43 @@ public class BluetoothManager extends Fragment {
         }
     }
 
+    private boolean serverListenForConnectionsConstant = false;
+
+    public void serverListenForConnections(boolean constant) {
+        serverListenForConnectionsConstant = constant;
+        UUID uuid = getNextUUID();
+        if (uuid != null) {
+            serverListenForConnections(uuid);
+        } else {
+            if (serverListenForConnectionsListener != null) {
+                serverListenForConnectionsListener.onConnectionEstablished(false, NO_AVAILABLE_UUID);
+            }
+        }
+
+    }
+
+    private void onConnectionEstablished(boolean established) {
+        if (established) {
+            removeNextUUID();
+            if (serverListenForConnectionsConstant) {
+                UUID uuid = getNextUUID();
+                if (uuid != null) {
+                    prepareServerListenForConnections();
+                    serverListenForConnections(uuid);
+                }
+            }
+        }
+    }
+
     /**
-     * Creates an {@link grioanpier.auth.users.bluetoothframework.Loaders.AcceptTaskLoader} that listens for incoming connections for the provided {@link java.util.UUID}.
-     * The results are stored in the {@link ApplicationHelper}.
+     * Creates an {@link grioanpier.auth.users.bluetoothframework.loaders.AcceptTaskLoader} that listens for incoming connections for the provided {@link java.util.UUID}.
+     * The results are stored in the {@link SocketManagerService}.
      *
      * @param uuid The {@link java.util.UUID} that will be used to listen for incoming connections.
      */
-    public void serverListenForConnections(final UUID uuid) {
+    private void serverListenForConnections(final UUID uuid) {
+        DEVICE_TYPE = HOST;
+
         final LoaderManager loaderManager = getLoaderManager();
         loaderManager.initLoader(ACCEPT_LOADER, null, new LoaderManager.LoaderCallbacks<BluetoothSocket>() {
             @Override
@@ -210,28 +260,184 @@ public class BluetoothManager extends Fragment {
 
             @Override
             public void onLoadFinished(Loader<BluetoothSocket> loader, BluetoothSocket bluetoothSocket) {
-                if (bluetoothSocket != null)
-                    ApplicationHelper.getInstance().addPlayerSocket(bluetoothSocket);
-
                 if (serverListenForConnectionsListener != null) {
-                    if (bluetoothSocket != null)
+                    if (bluetoothSocket != null) {
                         serverListenForConnectionsListener.onConnectionEstablished(true, bluetoothSocket.getRemoteDevice().getName());
-                    else
+                        onConnectionEstablished(true);
+                        if (mBound) {
+                            mService.addPlayerSocket(bluetoothSocket);
+
+                        }
+                    } else {
+                        Log.e(LOG_TAG, "serverListenForConnections finished with a null socket");
                         serverListenForConnectionsListener.onConnectionEstablished(false, null);
+                        onConnectionEstablished(false);
+                    }
                 }
             }
 
             @Override
-            public void onLoaderReset(Loader<BluetoothSocket> loader) {}
+            public void onLoaderReset(Loader<BluetoothSocket> loader) {
+            }
         });
 
     }
 
     /**
+     * Creates a {@link ConnectTaskLoader} to try and connect to the specified device.
+     * If a connection is established, it calls the respective method for the supplied {source}
+     *
+     * @param MAC_address the MAC Address of the target device.
+     */
+    public void connect(String MAC_address) {
+        if (MAC_address == null)
+            return;
+
+        String hostAddress = null;
+        if (mBound) {
+            hostAddress = mService.getHostAddress();
+        }
+
+        if (hostAddress != null && MAC_address.equals(hostAddress)) {
+            Toast.makeText(getActivity(), "Already connected", Toast.LENGTH_SHORT).show();
+            if (connectListener != null) {
+                String hostName = mBound ? mService.getHostName() : null;
+                connectListener.onConnected(true, hostName);
+            }
+            return;
+        }
+
+        if (mBound) {
+            mService.clear();
+        }
+
+        refreshUUIDs();
+
+        //If we were already trying to connect to a device, destroy the loader and start again.
+        final BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(MAC_address);
+        if (connectedDevice != null) {
+            connectedDevice = device;
+            getLoaderManager().restartLoader(CONNECT_LOADER, null, connectLoader);
+        } else {
+            connectedDevice = device;
+            getLoaderManager().initLoader(CONNECT_LOADER, null, connectLoader);
+        }
+
+    }
+
+    private final LoaderManager.LoaderCallbacks<BluetoothSocket> connectLoader = new LoaderManager.LoaderCallbacks<BluetoothSocket>() {
+        @Override
+        public Loader<BluetoothSocket> onCreateLoader(int id, Bundle args) {
+            return new ConnectTaskLoader(getActivity(), connectedDevice, Constants.sUUIDs);
+        }
+
+        @Override
+        //Attempts to connect to the device.
+        public void onLoadFinished(Loader<BluetoothSocket> loader, BluetoothSocket btSocket) {
+            DEVICE_TYPE = PLAYER;
+            Log.e(LOG_TAG, "ConnectTaskLoader finished");
+            if (btSocket != null) {
+                String name = btSocket.getRemoteDevice().getName();
+                Log.e(LOG_TAG, "Connected to " + name);
+
+                if (connectListener != null) {
+                    Log.e(LOG_TAG, "connectListener NOT null");
+                    connectListener.onConnected(true, name);
+                } else {
+                    Log.e(LOG_TAG, "connectListener NULL");
+                }
+
+                if (mBound) {
+                    Log.e(LOG_TAG, "Service was bound");
+                    mService.setHostSocket(btSocket);
+                } else {
+                    Log.e(LOG_TAG, "Host Socket couldn't be bound to the SocketManagerService!");
+                }
+
+            } else {
+                Log.e(LOG_TAG, "BluetoothSocket was null");
+                if (connectListener != null) {
+                    Log.e(LOG_TAG, "connectListener NOT null");
+                    connectListener.onConnected(false, null);
+                } else {
+                    Log.e(LOG_TAG, "connectListener NULL");
+                }
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<BluetoothSocket> loader) {
+        }
+    };
+
+    private UUID getNextUUID() {
+        if (sAvailableUUIDs.isEmpty())
+            return null;
+        else
+            return sAvailableUUIDs.get(0);
+    }
+
+    /**
+     * @return true if there was something to remove, false otherwise.
+     */
+    private void removeNextUUID() {
+        if (!sAvailableUUIDs.isEmpty()) {
+            sAvailableUUIDs.remove(0);
+        }
+    }
+
+    public static void refreshUUIDs() {
+        sAvailableUUIDs.clear();
+        sAvailableUUIDs.ensureCapacity(10);
+        sAvailableUUIDs.addAll(Arrays.asList(Constants.sUUIDs));
+    }
+
+    public static boolean isHost() {
+        return DEVICE_TYPE == HOST;
+    }
+
+    /**
      * Prepares the server to listen for incoming connections.
      */
-    public void prepareServerListenForConnections() {
+    private void prepareServerListenForConnections() {
         getLoaderManager().destroyLoader(ACCEPT_LOADER);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Bind to SocketManagerService
+        Intent intent = new Intent(getActivity(), SocketManagerService.class);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
+    private final ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SocketManagerService.SocketManagerServiceBinder binder = (SocketManagerService.SocketManagerServiceBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
+
+    @Override
+    public void onStop() {
+        if (mBound) {
+            getActivity().unbindService(mConnection);
+            mBound = false;
+        }
+        super.onStop();
     }
 
     @Override
@@ -275,36 +481,48 @@ public class BluetoothManager extends Fragment {
     }
 
     public interface ServerListenForConnectionsListener {
-        //Invoked when a connection was established. The result is saved in ApplicationHelper.hostSockets
+        //Invoked when a connection was established. The result is saved in SocketManagerService.hostSockets
         void onConnectionEstablished(boolean established, String name);
     }
 
-    BluetoothRequestEnableListener bluetoothRequestEnableListener;
+    public interface ConnectListener {
+        void onConnected(boolean connected, String deviceName);
+    }
+
+    private BluetoothRequestEnableListener bluetoothRequestEnableListener;
 
     public void setBluetoothRequestEnableListener(BluetoothRequestEnableListener listener) {
         bluetoothRequestEnableListener = listener;
     }
 
 
-    BluetoothRequestDiscoverableListener bluetoothRequestDiscoverableListener;
+    private BluetoothRequestDiscoverableListener bluetoothRequestDiscoverableListener;
 
     public void setBluetoothRequestDiscoverableListener(BluetoothRequestDiscoverableListener listener) {
         bluetoothRequestDiscoverableListener = listener;
     }
 
 
-    BluetoothGetAvailableDevicesListener bluetoothGetAvailableDevicesListener;
+    private BluetoothGetAvailableDevicesListener bluetoothGetAvailableDevicesListener;
 
     public void setBluetoothGetAvailableDevicesListener(BluetoothGetAvailableDevicesListener listener) {
         bluetoothGetAvailableDevicesListener = listener;
     }
 
 
-    ServerListenForConnectionsListener serverListenForConnectionsListener;
+    private ServerListenForConnectionsListener serverListenForConnectionsListener;
 
     public void setServerListenForConnectionsListener(ServerListenForConnectionsListener listener) {
         serverListenForConnectionsListener = listener;
     }
+
+    private ConnectListener connectListener;
+
+    public void setConnectListener(ConnectListener listener) {
+        connectListener = listener;
+    }
+
+    private final static String NO_AVAILABLE_UUID = "There are no more available UUIDs";
 
 }
 

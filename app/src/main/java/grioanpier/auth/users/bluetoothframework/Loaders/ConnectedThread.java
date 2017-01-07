@@ -1,7 +1,8 @@
-package grioanpier.auth.users.bluetoothframework.Loaders;
+package grioanpier.auth.users.bluetoothframework.loaders;
 
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,26 +19,28 @@ public class ConnectedThread extends Thread {
     private final InputStream mInStream;
     private final OutputStream mOutStream;
     private final Handler mHandler;
-    public final int ID = hashCode();
+    public final String ID;
 
     private static final int MESSAGE_SIZE = 1024;
     public static final int THREAD_READ = 0;
     public static final int THREAD_DISCONNECTED = 1;
-    public static final int THREAD_STREAM_ERROR = 42;
+    public static final int THREAD_STREAM_ERROR = 2;
 
     private boolean isActive;
 
-    public<T extends Handler> ConnectedThread(BluetoothSocket socket, T handler) {
+    public <T extends Handler> ConnectedThread(BluetoothSocket socket, T handler) {
         mSocket = socket;
         InputStream tempIn = null;
         OutputStream tempOut = null;
         mHandler = handler;
-        isActive=true;
+        ID = socket.getRemoteDevice().getAddress();
+        isActive = true;
 
         try {
             tempIn = socket.getInputStream();
             tempOut = socket.getOutputStream();
         } catch (IOException e) {
+            e.printStackTrace();
             mHandler.obtainMessage(THREAD_STREAM_ERROR).sendToTarget();
         }
 
@@ -45,7 +48,7 @@ public class ConnectedThread extends Thread {
         mOutStream = tempOut;
     }
 
-    public void run(){
+    public void run() {
         byte[] buffer = new byte[MESSAGE_SIZE];
         int numOfBytes;
 
@@ -53,15 +56,18 @@ public class ConnectedThread extends Thread {
         while (isActive) {
             try {
                 numOfBytes = mInStream.read(buffer);
-                if (numOfBytes==-1){
+                if (numOfBytes == -1) {
                     continue;
                 }
                 mHandler.obtainMessage(THREAD_READ, numOfBytes, -1, buffer).sendToTarget();
-
             } catch (IOException e) {
-                mHandler.obtainMessage(THREAD_DISCONNECTED, ID, -1, mSocket.getRemoteDevice().getName()).sendToTarget();
+                //TODO the message should only contain the Thread.ID
+                String[] info = {ID, mSocket.getRemoteDevice().getName()};
+                mHandler.obtainMessage(THREAD_DISCONNECTED, info).sendToTarget();
                 cancel();
                 break;
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }
     }
@@ -74,28 +80,36 @@ public class ConnectedThread extends Thread {
     public synchronized void write(byte[] buffer) {
         try {
             mOutStream.write(buffer);
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            Log.v(LOG_TAG, "IO Exception! While writing in ConnectedThread");
+            e.printStackTrace();
+        } catch (Exception e) {
+            Log.v(LOG_TAG, "Other Exception! While writing in ConnectedThread");
+            e.printStackTrace();
+        }
     }
 
     public synchronized void cancel() {
-        isActive=false;
+        isActive = false;
 
-        try{
-            if (mInStream!=null)
+        try {
+            if (mInStream != null)
                 mInStream.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
 
-        try{
-            if (mOutStream!=null)
+        try {
+            if (mOutStream != null)
                 mOutStream.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
 
         try {
             mSocket.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
 
         this.interrupt();
-
     }
 
 

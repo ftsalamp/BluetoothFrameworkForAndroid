@@ -1,27 +1,39 @@
 package grioanpier.auth.users.bluetoothframework;
 
 import android.app.Service;
-import android.bluetooth.BluetoothSocket;
+import android.bluetooth.*;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.TreeMap;
 
-import grioanpier.auth.users.bluetoothframework.Loaders.ConnectedThread;
+import grioanpier.auth.users.bluetoothframework.loaders.ConnectedThread;
 
 public class SocketManagerService extends Service {
 
-    IBinder mBinder = new MyBinder();
+    private final IBinder mBinder = new SocketManagerServiceBinder();
     private BluetoothSocket hostSocket = null;
-    private TreeMap<Integer, BluetoothSocket> playerSockets = new TreeMap<>();
-    private final TreeMap<Integer, ConnectedThread> connectedThreads = new TreeMap<>();
+    private final TreeMap<String, BluetoothSocket> playerSockets = new TreeMap<>();
+    private final TreeMap<String, ConnectedThread> connectedThreads = new TreeMap<>();
     private static final String LOG_TAG = SocketManagerService.class.getCanonicalName();
+    private final SocketManagerServiceHandler socketManagerHandler = new SocketManagerServiceHandler(this);
+
+    private final HashMap<String, String> connectedDevicesNames = new HashMap<>();
+
+
+    /**
+     * Synchronization lock to be used by the write methods in order to avoid possible messages that are sent the same time
+     * and things mess up.
+     */
+    private final static Object Write_Lock = new Object();
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -65,15 +77,17 @@ public class SocketManagerService extends Service {
     }
 
 
-    public <T extends Handler> void addPlayerSocket(BluetoothSocket btSocket, T handler) {
+    public void addPlayerSocket(BluetoothSocket btSocket) {
         Log.i(LOG_TAG, "A new player socket was added: " + btSocket.hashCode());
-        ConnectedThread thread = new ConnectedThread(btSocket, handler);
+        ConnectedThread thread = new ConnectedThread(btSocket, socketManagerHandler);
         thread.start();
         connectedThreads.put(thread.ID, thread);
         playerSockets.put(thread.ID, btSocket);
+        connectedDevicesNames.put(btSocket.getRemoteDevice().getName(), thread.ID);
+
     }
 
-    public boolean removePlayerSocket(Integer key) {
+    private boolean removePlayerSocket(String key) {
         Log.i(LOG_TAG, "Removing player socket: " + key);
         if (playerSockets.containsKey(key)) {
             try {
@@ -86,33 +100,23 @@ public class SocketManagerService extends Service {
             return false;
     }
 
-    public Collection<BluetoothSocket> getPlayerSockets() {
-        return playerSockets.values();
-    }
-
-    public <T extends Handler> void setHostSocket(BluetoothSocket btSocket, T handler) {
+    void setHostSocket(BluetoothSocket btSocket) {
         hostSocket = btSocket;
-        ConnectedThread thread = new ConnectedThread(btSocket, handler);
+        ConnectedThread thread = new ConnectedThread(btSocket, socketManagerHandler);
         thread.start();
         connectedThreads.put(thread.ID, thread);
+        connectedDevicesNames.put(btSocket.getRemoteDevice().getName(), thread.ID);
     }
 
-    public boolean removeHostSocket() {
-        if (hostSocket == null)
-            return false;
-        else {
+    private void removeHostSocket() {
+        if (hostSocket != null) {
             try {
                 hostSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
             hostSocket = null;
-            return true;
         }
-    }
-
-    public BluetoothSocket getHostSocket() {
-        return hostSocket;
     }
 
     public String getHostAddress() {
@@ -122,30 +126,119 @@ public class SocketManagerService extends Service {
             return hostSocket.getRemoteDevice().getAddress();
     }
 
-    public void removeThread(Integer key) {
+    public String getHostName() {
+        if (hostSocket == null)
+            return null;
+        else
+            return hostSocket.getRemoteDevice().getName();
+    }
+
+    private void removeThread(String key) {
         connectedThreads.remove(key);
     }
 
-    public int threadsSize() {
-        return connectedThreads.size();
+    //TODO The MAC is unavailable as of Android 6.
+    public String getMAC(String deviceName) {
+        return connectedDevicesNames.get(deviceName);
     }
 
-    public void writeToAll(String message) {
-        Log.i(LOG_TAG, "Relaying message: " + message);
+    /**
+     * Sends a content to every connected device (including to yours).
+     *
+     * @param message the content to send.
+     * @param appCode the appCode of the content. It states what part of the app the content comes from. For example {BLUETOOTH_CHAT}.
+     */
+    public void sendGlobalMessage(String message, int appCode) {
+        sendMessage(message, "null", appCode, true);
+    }
+
+    public void sendPrivateMessage(String message, String target, int appCode) {
+        sendMessage(message, target, appCode, false);
+    }
+
+    private synchronized void sendMessage(String message, String target, int appCode, boolean global) {
+        Log.i(LOG_TAG, "Write(" + message + ")");
+
+        //Format the content.
+        StringBuilder builder = new StringBuilder();
+
+        //Pack everything in a BluetoothMessage
+        BluetoothMessage btMsg = new BluetoothMessage();
+        btMsg.isGlobal = global;
+        btMsg.targetMAC = target;
+        btMsg.sourceMAC = BluetoothManager.getMACAddress();
+        btMsg.content = message;
+        btMsg.appCode = appCode;
+        builder.append(btMsg.getMessage());
+
+        synchronized (Write_Lock) {
+            Log.v(LOG_TAG, "Sending formatted content: " + builder.toString());
+
+            if (global) {
+                //Send the message. If the device isn't the host, then the content is sent to the host who relays it appropriately.
+                writeToAll(builder.toString());
+
+                if (BluetoothManager.isHost()) {
+                    //If the device is the host, also consume it
+                    byte[] buffer = builder.toString().getBytes();
+                    socketManagerHandler.obtainMessage(ConnectedThread.THREAD_READ, buffer.length, -1, buffer).sendToTarget();
+                }
+            } else {
+                if (BluetoothManager.isHost()) {
+                    writeTo(builder.toString(), target);
+                } else {
+                    //The message will be sent to the host who will forward it.
+                    writeToAll(builder.toString());
+                }
+
+            }
+
+        }
+    }
+
+
+    /**
+     * Formats the content in the form of [{@param content.length}][{@param content}]. The length of the content should be less than 4 decimals (0-999)
+     * For example, "Hello World!" will be formatted to "012Hello World!", where 12 is the length of "Hello World!".
+     *
+     * @param message The content to format
+     * @return The formatted content
+     */
+    public static String format(String message) {
+        return BluetoothMessage.format(message);
+    }
+
+    /**
+     * De-formats a content that's in the form of [content.length][content][rest]. The length of the content can be any String, as long as its size is less than 4 decimals (0-999)
+     * and in the form of [001, 002, ..., 010, 011, ..., 999]. The [rest] can by anything, it isn't taken into account.
+     * Use the returned integer to calculate the start and end indexes of the code, which will be at index_start=3 and index_end=3+length.
+     * <p/>
+     * For example,
+     * String content = "012Hello World![rest]";
+     * int length = deformat(content);
+     * String content = content.substring(3,length+3); // content == "Hello World!"
+     * String rest = content.substring(length + 3, content.length()); // rest == "BlahBlahBlah"
+     *
+     * @param message The content to be de-formatted.
+     * @return The length of the actual content.
+     */
+    public static int deformat(String message) {
+        return BluetoothMessage.deformat(message);
+    }
+
+    private void writeToAll(String message) {
+        Log.i(LOG_TAG, "Relaying content: " + message);
         byte[] buffer = message.getBytes();
         introduceDelay(250);
         for (ConnectedThread thread : connectedThreads.values())
             thread.write(buffer);
     }
 
-    public void writeTo(String message, int threadIndex) {
+    private void writeTo(String message, String key) {
         introduceDelay(250);
-        Collection<ConnectedThread> col = connectedThreads.values();
-        if (!col.isEmpty()) {
-            ConnectedThread thread = (ConnectedThread) col.toArray()[threadIndex];
-            if (thread != null) {
-                thread.write(message.getBytes());
-            }
+        ConnectedThread thread = connectedThreads.get(key);
+        if (thread != null) {
+            thread.write(message.getBytes());
         }
     }
 
@@ -171,34 +264,130 @@ public class SocketManagerService extends Service {
 
     }
 
-    private void closeHostSocket() {
-        try {
-            if (hostSocket != null)
-                hostSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            hostSocket = null;
-        }
-    }
-
     private void clearConnectedThreads() {
         for (ConnectedThread thread : connectedThreads.values())
             thread.cancel();
         connectedThreads.clear();
+        connectedDevicesNames.clear();
     }
 
     public void clear() {
-        closeHostSocket();
+        removeHostSocket();
         closePlayerSockets();
         clearConnectedThreads();
     }
 
-    public class MyBinder extends Binder {
-
-        SocketManagerService getService() {
+    public class SocketManagerServiceBinder extends Binder {
+        public SocketManagerService getService() {
             return SocketManagerService.this;
         }
-
     }
+
+    public <T extends Handler> void addHandler(T handler) {
+        socketManagerHandler.addHandler(handler);
+    }
+
+    public <T extends Handler> void removeHandler(T handler) {
+        socketManagerHandler.removeHandler(handler);
+    }
+
+    public static class SocketManagerServiceHandler extends Handler {
+        private final WeakReference<SocketManagerService> socketManagerService2WeakReference;
+        private final TreeMap<Integer, Handler> mHandlers;
+
+        private <T extends Handler> void addHandler(T handler) {
+            mHandlers.put(handler.hashCode(), handler);
+        }
+
+        private <T extends Handler> void removeHandler(T handler) {
+            mHandlers.remove(handler.hashCode());
+        }
+
+        SocketManagerServiceHandler(SocketManagerService socketManagerService) {
+            mHandlers = new TreeMap<>();
+            socketManagerService2WeakReference = new WeakReference<>(socketManagerService);
+        }
+
+        @Override
+        public synchronized void handleMessage(Message msg) {
+            switch (msg.what) {
+                case ConnectedThread.THREAD_READ:
+                    int numOfBytes = msg.arg1;
+                    final String message = new String((byte[]) msg.obj, 0, numOfBytes);
+                    //message=[length][isGlobal][length][target MAC][length][source MAC][length][appCode][message content]
+                    Log.i(LOG_TAG, "Message received: " + message);
+                    BluetoothMessage btMsg = new BluetoothMessage(message);
+                    Log.i(LOG_TAG, "BluetoothMessage received: " + btMsg.toString());
+
+                    //Consuming the message
+                    if (!BluetoothManager.isHost() || (btMsg.isGlobal || btMsg.targetMAC.equals(BluetoothManager.getMACAddress()))) {
+                        //If the device isn't the host, then consume the message, global or private
+                        //Otherwise, the device is the host, so consume the message only if it's global or private but the target was the host.
+                        for (Handler handler : mHandlers.values())
+                            handler.obtainMessage(btMsg.appCode, btMsg.content).sendToTarget();
+                    }
+
+
+                    //Relaying the message. The message is relayed only from the host.
+                    if (BluetoothManager.isHost()) {
+                        if (btMsg.isGlobal && !btMsg.sourceMAC.equals(BluetoothManager.getMACAddress())) {
+                            //Relay the message to everyone if the message is global and wasn't sent from the same device.
+                            //The host sends the message to everyone before consuming it, so at this point it has already been relayed.
+                            socketManagerService2WeakReference.get().writeToAll(message);
+                        } else if (!btMsg.isGlobal && !btMsg.targetMAC.equals(BluetoothManager.getMACAddress())) {
+                            //If the device is the host and the message is private, forward appropriately. (unless the target was the host)
+                            //The source device doesn't get a copy of the message.
+
+                            //The device sends the name of the target instead of his MAC. The host retrieves it from the list of connected devices.
+                            String targetMac = socketManagerService2WeakReference.get().getMAC(btMsg.targetMAC);
+                            if (targetMac!=null){
+                                socketManagerService2WeakReference.get().writeTo(message, targetMac);
+                            }
+
+                        }
+                    }
+
+
+                    break;
+
+                case THREAD_CONNECTED:
+
+                    break;
+
+                case ConnectedThread.THREAD_DISCONNECTED:
+                    //TODO the msg.obj should be forwarded to all the handlers instead.
+                    Log.v(LOG_TAG, "Thread disconnected! " + msg.arg1);
+                    //ConnectedThread calls ConnectedThread.cancel() internally which closes the streams and the socket.
+                    //Remove it from the list as well. The thread returns its ID and the name of the remote device in a String[] array.
+                    String ID = ((String[]) msg.obj)[0];
+                    String remoteDeviceName = ((String[]) msg.obj)[1];
+                    socketManagerService2WeakReference.get().removeThread(ID);
+                    socketManagerService2WeakReference.get().connectedDevicesNames.remove(remoteDeviceName);
+                    //Also remove the socket from our list.
+                    String who;
+                    if (socketManagerService2WeakReference.get().removePlayerSocket(ID)) {
+                        //The user who left was a player.
+                        who = remoteDeviceName;
+                    } else {
+                        socketManagerService2WeakReference.get().removeHostSocket();
+                        who = "The host";
+                    }
+
+                    for (Handler handler : mHandlers.values())
+                        handler.obtainMessage(ConnectedThread.THREAD_DISCONNECTED, who).sendToTarget();
+
+                    break;
+
+            }
+        }
+    }
+
+
+    //These are provided as int in the msg.what
+    public static final int THREAD_READ = ConnectedThread.THREAD_READ;//0
+    public static final int THREAD_DISCONNECTED = ConnectedThread.THREAD_DISCONNECTED;//1
+    public static final int THREAD_STREAM_ERROR = ConnectedThread.THREAD_STREAM_ERROR;//2
+    public static final int THREAD_CONNECTED = 3;
+
+
 }

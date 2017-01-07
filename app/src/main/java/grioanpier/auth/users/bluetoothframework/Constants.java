@@ -9,7 +9,7 @@ public class Constants {
 
     //UUID was acquired from UUID.randomUUID() once and is now hardcoded
     //bluetooth client and server must use the same UUID
-    public static final String[] sUUID_STRINGS = {
+    private static final String[] sUUID_STRINGS = {
             "728b4e0c-20bf-47cd-843e-016ab7075f1a",
             "85f8593d-4780-49d6-a174-df5ee4960b4a",
             "f113f31b-d6bc-4bb7-b5da-53f23c155c45",
@@ -29,14 +29,5 @@ public class Constants {
     }
 
     public static final UUID[] sUUIDs = getUUIDsFromStrings(sUUID_STRINGS);
-
-    //The available device types
-    public static final int DEVICE_SPECTATOR = 0;
-    public static final int DEVICE_PLAYER = 1;
-    public static final int DEVICE_HOST = 2;
-
-    //ApplicationHelper sources
-    public static final String BLUETOOTH_CHAT = "bluetooth_chat";
-
 
 }

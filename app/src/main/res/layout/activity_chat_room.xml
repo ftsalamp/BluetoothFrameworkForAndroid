@@ -2,13 +2,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="grioanpier.auth.users.bluetoothframework.ChatRoom$PlaceholderFragment"
+    tools:context="grioanpier.auth.users.bluetoothframework.bluetoothChat.ChatRoom$PlaceholderFragment"
     android:orientation="vertical"
     android:background="@drawable/tiles_chat"
     >
     <fragment
         android:id="@+id/waiting_screen_fragment"
-        android:name="grioanpier.auth.users.bluetoothframework.ChatRoom$PlaceholderFragment"
+        android:name="grioanpier.auth.users.bluetoothframework.bluetoothChat.ChatRoom$PlaceholderFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:layout="@layout/fragment_chat_room_placeholder"
@@ -17,7 +17,7 @@
 
     <fragment
         android:id="@+id/chat_fragment"
-        android:name="grioanpier.auth.users.bluetoothframework.ChatFragment"
+        android:name="grioanpier.auth.users.bluetoothframework.bluetoothChat.ChatFragment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:context="grioanpier.auth.users.movies.BluetoothChatFragment"

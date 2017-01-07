@@ -1,4 +1,4 @@
-package grioanpier.auth.users.bluetoothframework.Loaders;
+package grioanpier.auth.users.bluetoothframework.loaders;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
@@ -48,7 +48,7 @@ public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
         try {
             mBtServerSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(mUUID.toString(), mUUID);
             if (mBtServerSocket != null) {
-                //Cancel the Bluetooth Discovery (if active) just before accepting so that other people can find you
+                //Cancel the Bluetooth Discovery (if active) to consume less energy.
                 BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
                 mBtSocket = mBtServerSocket.accept();
             }
@@ -73,7 +73,7 @@ public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
     protected void onReset() {
         super.onReset();
         // Ensure the loader is stopped
-        onStopLoading();
+        stopLoading();
         if (mBtSocket != null) {
             mBtSocket = null;
         }
