@@ -3,6 +3,7 @@ package grioanpier.auth.users.bluetoothframework;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.app.LoaderManager.LoaderCallbacks;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 
+import grioanpier.auth.users.bluetoothframework.SocketManagerService.SocketManagerServiceBinder;
 import grioanpier.auth.users.bluetoothframework.loaders.AcceptTaskLoader;
 import grioanpier.auth.users.bluetoothframework.loaders.ConnectTaskLoader;
 
@@ -33,8 +35,8 @@ public class BluetoothManager extends Fragment {
 
     private static final String LOG_TAG = BluetoothManager.class.getSimpleName();
     private static final int ACCEPT_LOADER = 0;
-
     private static final int CONNECT_LOADER = 1;
+
     //The device that we want to connect to. Shouldn't be used anywhere else except for the ConnectLoader
     private BluetoothDevice connectedDevice = null;
 
@@ -207,7 +209,7 @@ public class BluetoothManager extends Fragment {
             case ACTION_FOUND:
                 // Get the BluetoothDevice object from the Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if (device != null && bluetoothGetAvailableDevicesListener != null) {
+                if ((device != null) && (bluetoothGetAvailableDevicesListener != null)) {
                     bluetoothGetAvailableDevicesListener.onDeviceFound(device);
                 }
                 break;
@@ -243,16 +245,16 @@ public class BluetoothManager extends Fragment {
     }
 
     /**
-     * Creates an {@link grioanpier.auth.users.bluetoothframework.loaders.AcceptTaskLoader} that listens for incoming connections for the provided {@link java.util.UUID}.
+     * Creates an {@link AcceptTaskLoader} that listens for incoming connections for the provided {@link UUID}.
      * The results are stored in the {@link SocketManagerService}.
      *
-     * @param uuid The {@link java.util.UUID} that will be used to listen for incoming connections.
+     * @param uuid The {@link UUID} that will be used to listen for incoming connections.
      */
     private void serverListenForConnections(final UUID uuid) {
         DEVICE_TYPE = HOST;
 
-        final LoaderManager loaderManager = getLoaderManager();
-        loaderManager.initLoader(ACCEPT_LOADER, null, new LoaderManager.LoaderCallbacks<BluetoothSocket>() {
+        LoaderManager loaderManager = getLoaderManager();
+        loaderManager.initLoader(ACCEPT_LOADER, null, new LoaderCallbacks<BluetoothSocket>() {
             @Override
             public Loader<BluetoothSocket> onCreateLoader(int id, Bundle args) {
                 return new AcceptTaskLoader(getActivity(), uuid);
@@ -298,7 +300,7 @@ public class BluetoothManager extends Fragment {
             hostAddress = mService.getHostAddress();
         }
 
-        if (hostAddress != null && MAC_address.equals(hostAddress)) {
+        if ((hostAddress != null) && MAC_address.equals(hostAddress)) {
             Toast.makeText(getActivity(), "Already connected", Toast.LENGTH_SHORT).show();
             if (connectListener != null) {
                 String hostName = mBound ? mService.getHostName() : null;
@@ -314,8 +316,8 @@ public class BluetoothManager extends Fragment {
         refreshUUIDs();
 
         //If we were already trying to connect to a device, destroy the loader and start again.
-        final BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(MAC_address);
-        if (connectedDevice != null) {
+        BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(MAC_address);
+        if (    connectedDevice != null) {
             connectedDevice = device;
             getLoaderManager().restartLoader(CONNECT_LOADER, null, connectLoader);
         } else {
@@ -325,7 +327,7 @@ public class BluetoothManager extends Fragment {
 
     }
 
-    private final LoaderManager.LoaderCallbacks<BluetoothSocket> connectLoader = new LoaderManager.LoaderCallbacks<BluetoothSocket>() {
+    private final LoaderCallbacks<BluetoothSocket> connectLoader = new LoaderCallbacks<BluetoothSocket>() {
         @Override
         public Loader<BluetoothSocket> onCreateLoader(int id, Bundle args) {
             return new ConnectTaskLoader(getActivity(), connectedDevice, Constants.sUUIDs);
@@ -420,7 +422,7 @@ public class BluetoothManager extends Fragment {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            SocketManagerService.SocketManagerServiceBinder binder = (SocketManagerService.SocketManagerServiceBinder) service;
+            SocketManagerServiceBinder binder = (SocketManagerServiceBinder) service;
             mService = binder.getService();
             mBound = true;
         }

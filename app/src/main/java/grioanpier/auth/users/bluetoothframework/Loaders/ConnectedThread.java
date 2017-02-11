@@ -65,7 +65,6 @@ public class ConnectedThread extends Thread {
                 String[] info = {ID, mSocket.getRemoteDevice().getName()};
                 mHandler.obtainMessage(THREAD_DISCONNECTED, info).sendToTarget();
                 cancel();
-                break;
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -109,7 +108,7 @@ public class ConnectedThread extends Thread {
         } catch (IOException e) {
         }
 
-        this.interrupt();
+        interrupt();
     }
 
 

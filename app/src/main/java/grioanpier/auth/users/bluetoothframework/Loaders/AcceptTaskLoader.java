@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * Attempts to connect to the specified device with the provided UUID.
- * Returns the {@link android.bluetooth.BluetoothSocket} (null if it failed).
+ * Returns the {@link BluetoothSocket} (null if it failed).
  */
 public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
 
@@ -22,7 +22,7 @@ public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
     private BluetoothServerSocket mBtServerSocket;
     private BluetoothSocket mBtSocket = null;
 
-    public AcceptTaskLoader(final Context context, UUID uuid) {
+    public AcceptTaskLoader(Context context, UUID uuid) {
         super(context);
         mUUID = uuid;
     }
@@ -35,7 +35,7 @@ public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
             // immediately.
             deliverResult(mBtSocket);
         }
-        if (takeContentChanged() || mBtSocket == null) {
+        if (takeContentChanged() || (mBtSocket == null)) {
             // If the data has changed since the last time it was loaded
             // or is not currently available, start a load.
             forceLoad();
@@ -61,7 +61,7 @@ public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
     }
 
     @Override
-    public void deliverResult(final BluetoothSocket socket) {
+    public void deliverResult(BluetoothSocket socket) {
         //The {@link AcceptTaskLoader} is for accepting incoming bluetooth connections, not for managing them.
         //Therefor we ignore the previous value of the {mBtSocket}
         mBtSocket = socket;

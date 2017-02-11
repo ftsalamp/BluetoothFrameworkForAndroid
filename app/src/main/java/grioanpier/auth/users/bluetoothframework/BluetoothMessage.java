@@ -1,7 +1,9 @@
 package grioanpier.auth.users.bluetoothframework;
 
 /**
- * Created by Ioannis on 12/29/2016.
+ * A class that implements a message that it sends via bluetooth. Other than the actual content of the message, it includes
+ * additional information regarding the source and target MAC, if it's global (intended for everyone) or private (intended for a single device)
+ * and an application code that can be used to determined the type of the message (user defined).
  */
 
 public class BluetoothMessage {
@@ -76,8 +78,13 @@ public class BluetoothMessage {
         content = message;
     }
 
-
+    /**
+     * Returns a String equivalent that can be passed to the Constructor to create the Message once again.
+     * This method is (mainly) used by the sender.
+     * @return a ready-to-send text-formatted message.
+     */
     public String getMessage(){
+        //TODO String format(null) equals "0" ?
         return format(isGlobal.toString()) +
                 format(targetMAC) +
                 format(sourceMAC) +
@@ -97,7 +104,8 @@ public class BluetoothMessage {
 
         if (message==null)
             return String.valueOf(0);
-        else if (message.length() < 10) {
+
+        if (message.length() < 10) {
             // 001,002,...009
             builder.append(0).append(0);
         } else if (message.length() < 100) {
@@ -130,9 +138,12 @@ public class BluetoothMessage {
         int int1 = message.charAt(0) - 48;
         int int2 = message.charAt(1) - 48;
         int int3 = message.charAt(2) - 48;
-        return (100 * int1 + 10 * int2 + int3);
+        return ((100 * int1) + (10 * int2) + int3);
     }
 
+    /**
+     * @return a visual friendly overview of the bluetooth message
+     */
     @Override
     public String toString(){
         return "isGlobal: " + (isGlobal.toString()) + '\n' +

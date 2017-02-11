@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -28,10 +29,12 @@ import java.util.Arrays;
 
 import grioanpier.auth.users.bluetoothframework.BluetoothManager;
 import grioanpier.auth.users.bluetoothframework.R;
+import grioanpier.auth.users.bluetoothframework.R.id;
+import grioanpier.auth.users.bluetoothframework.R.layout;
 import grioanpier.auth.users.bluetoothframework.SocketManagerService;
+import grioanpier.auth.users.bluetoothframework.SocketManagerService.SocketManagerServiceBinder;
 
 public class ChatFragment extends Fragment {
-    //TODO: fragment_bluetooth_chat.xml, context ChatRoom should be ChatFragment?
     private static final int CHAT_GLOBAL = 4;
     private static final int CHAT_PRIVATE = 5;
 
@@ -54,21 +57,18 @@ public class ChatFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-
-
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_bluetooth_chat, container, false);
+        return inflater.inflate(layout.fragment_bluetooth_chat, container, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        mConversationView = (ListView) view.findViewById(R.id.chat_listview);
-        mOutEditText = (EditText) view.findViewById(R.id.edit_text_out);
+        mConversationView = (ListView) view.findViewById(id.chat_listview);
+        mOutEditText = (EditText) view.findViewById(id.edit_text_out);
 
         if (savedInstanceState != null) {
             String[] ch;
@@ -81,7 +81,7 @@ public class ChatFragment extends Fragment {
 
         // Initialize the array adapter for the conversation thread using (possibly) the previous chat (restore it)
         mConversationArrayAdapter = new ArrayAdapter<>(getActivity(),
-                R.layout.message_chat,
+                layout.message_chat,
                 mConversationArrayList);
         mHandler = new ChatHandler(mConversationArrayAdapter);
 
@@ -99,7 +99,7 @@ public class ChatFragment extends Fragment {
             }
         });
         //Sets the soft keyboard to be hidden when the app starts.
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        getActivity().getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_HIDDEN);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class ChatFragment extends Fragment {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            SocketManagerService.SocketManagerServiceBinder binder = (SocketManagerService.SocketManagerServiceBinder) service;
+            SocketManagerServiceBinder binder = (SocketManagerServiceBinder) service;
             mService = binder.getService();
             mBound = true;
             mService.addHandler(mHandler);
@@ -157,7 +157,7 @@ public class ChatFragment extends Fragment {
      */
     private void sendMessage(String message) {
         // Check that there's actually something to send
-        if (message.length() > 0) {
+        if (!message.isEmpty()) {
 
             String targetName = null;
             if (message.startsWith("\\w")) {
@@ -175,6 +175,7 @@ public class ChatFragment extends Fragment {
                 if (targetName == null) {
                     mService.sendGlobalMessage(deviceName + message, CHAT_GLOBAL);
                 } else {
+                    //TODO: put this in the SocketManagerService
                     String targetMAC = mService.getMAC(targetName);
                     if (targetMAC == null) {
                         mService.sendPrivateMessage(deviceName + message, targetName, CHAT_PRIVATE);
@@ -207,7 +208,7 @@ public class ChatFragment extends Fragment {
         public void handleMessage(Message msg) {
             Log.i(LOG_TAG, "Chat Handler start!");
 
-            if (msg.what != CHAT_GLOBAL && msg.what != CHAT_PRIVATE) {
+            if ((msg.what != CHAT_GLOBAL) && (msg.what != CHAT_PRIVATE)) {
                 Log.i(LOG_TAG, "This isn't for me");
                 return;
             }
@@ -219,8 +220,6 @@ public class ChatFragment extends Fragment {
             int length = SocketManagerService.deformat(message);
             String deviceName = message.substring(3, length + 3);
             message = message.substring(length + 3, message.length());
-
-
 
             if (msg.what == CHAT_GLOBAL) {
                 if (deviceName.equals(BluetoothManager.getName()))

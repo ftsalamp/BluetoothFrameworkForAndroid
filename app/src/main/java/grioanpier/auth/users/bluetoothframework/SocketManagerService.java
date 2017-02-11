@@ -138,12 +138,18 @@ public class SocketManagerService extends Service {
     }
 
     //TODO The MAC is unavailable as of Android 6.
+
+    /**
+     * Retrieves the MAC of the devices, if the two devices are conencted.
+     * @param deviceName The device whose MAC we are looking for
+     * @return the MAC address of the device
+     */
     public String getMAC(String deviceName) {
         return connectedDevicesNames.get(deviceName);
     }
 
     /**
-     * Sends a content to every connected device (including to yours).
+     * Sends the content to every connected device (including to yours).
      *
      * @param message the content to send.
      * @param appCode the appCode of the content. It states what part of the app the content comes from. For example {BLUETOOTH_CHAT}.
@@ -313,7 +319,7 @@ public class SocketManagerService extends Service {
             switch (msg.what) {
                 case ConnectedThread.THREAD_READ:
                     int numOfBytes = msg.arg1;
-                    final String message = new String((byte[]) msg.obj, 0, numOfBytes);
+                    String message = new String((byte[]) msg.obj, 0, numOfBytes);
                     //message=[length][isGlobal][length][target MAC][length][source MAC][length][appCode][message content]
                     Log.i(LOG_TAG, "Message received: " + message);
                     BluetoothMessage btMsg = new BluetoothMessage(message);

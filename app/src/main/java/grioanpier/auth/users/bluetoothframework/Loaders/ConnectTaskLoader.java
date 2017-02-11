@@ -21,14 +21,14 @@ public class ConnectTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
     private final UUID[] mUUIDs;
     private BluetoothSocket mBtSocket;
 
-    public ConnectTaskLoader(final Context context, BluetoothDevice bluetoothDevice, UUID... uuids) {
+    public ConnectTaskLoader(Context context, BluetoothDevice bluetoothDevice, UUID... uuids) {
         super(context);
         mUUIDs=uuids;
         mBtDevice=bluetoothDevice;
     }
 
     @Override
-    public void deliverResult(final BluetoothSocket socket) {
+    public void deliverResult(BluetoothSocket socket) {
         mBtSocket = socket;
         if (isStarted())
             super.deliverResult(socket);
@@ -39,7 +39,7 @@ public class ConnectTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
         super.onStartLoading();
         if (mBtSocket != null)
             deliverResult(mBtSocket);
-        if (takeContentChanged() || mBtSocket == null) {
+        if (takeContentChanged() || (mBtSocket == null)) {
             // If the data has changed since the last time it was loaded
             // or is not currently available, start a load.
             forceLoad();
@@ -68,7 +68,7 @@ public class ConnectTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
                 e.printStackTrace();
             }
 
-        }while (btSocket==null && index < mUUIDs.length );
+        }while ((btSocket == null) && (index < mUUIDs.length));
 
         return btSocket;
     }
