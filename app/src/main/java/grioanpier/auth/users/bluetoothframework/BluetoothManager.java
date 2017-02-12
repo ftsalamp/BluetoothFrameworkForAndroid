@@ -37,11 +37,26 @@ public class BluetoothManager extends Fragment {
     private static final int ACCEPT_LOADER = 0;
     private static final int CONNECT_LOADER = 1;
 
+    //UUID was acquired from UUID.randomUUID() once and is now hardcoded
+    //bluetooth client and server must use the same UUID
+    private static final UUID[] sUUIDs = {
+            UUID.fromString("728b4e0c-20bf-47cd-843e-016ab7075f1a"),
+            UUID.fromString("85f8593d-4780-49d6-a174-df5ee4960b4a"),
+            UUID.fromString("f113f31b-d6bc-4bb7-b5da-53f23c155c45"),
+            UUID.fromString("93a5d2e8-4fd2-4415-a245-81a41a4adab7"),
+            UUID.fromString("e3159cf2-b4ae-451d-b30d-ff4c61e86a53"),
+            UUID.fromString("a62e7a9d-fd82-4e10-85ea-2acb45dadc98"),
+            UUID.fromString("d187a344-23c5-4cc2-bc3b-f70eef93b3fc"),
+            UUID.fromString("da5dd52e-1cdf-474d-8eeb-3c31287ab7e2"),
+            UUID.fromString("6b98a8ea-9641-49e8-959c-9a9f767a6809"),
+            UUID.fromString("037c8466-b294-489c-b410-00f5a8c123c9")
+    };
+
     //The device that we want to connect to. Shouldn't be used anywhere else except for the ConnectLoader
     private BluetoothDevice connectedDevice = null;
 
 
-    private static final ArrayList<UUID> sAvailableUUIDs = new ArrayList<>(Arrays.asList(Constants.sUUIDs));
+    private static final ArrayList<UUID> sAvailableUUIDs = new ArrayList<>(Arrays.asList(sUUIDs));
     private static final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     private SocketManagerService mService;
@@ -330,7 +345,7 @@ public class BluetoothManager extends Fragment {
     private final LoaderCallbacks<BluetoothSocket> connectLoader = new LoaderCallbacks<BluetoothSocket>() {
         @Override
         public Loader<BluetoothSocket> onCreateLoader(int id, Bundle args) {
-            return new ConnectTaskLoader(getActivity(), connectedDevice, Constants.sUUIDs);
+            return new ConnectTaskLoader(getActivity(), connectedDevice, sUUIDs);
         }
 
         @Override
@@ -391,7 +406,7 @@ public class BluetoothManager extends Fragment {
     public static void refreshUUIDs() {
         sAvailableUUIDs.clear();
         sAvailableUUIDs.ensureCapacity(10);
-        sAvailableUUIDs.addAll(Arrays.asList(Constants.sUUIDs));
+        sAvailableUUIDs.addAll(Arrays.asList(sUUIDs));
     }
 
     public static boolean isHost() {
