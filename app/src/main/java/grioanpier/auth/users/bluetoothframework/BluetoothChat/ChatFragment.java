@@ -53,6 +53,11 @@ public class ChatFragment extends Fragment {
     private ArrayAdapter<String> mConversationArrayAdapter;
     private static ArrayList<String> mConversationArrayList;
 
+    /**
+     * The Handler that gets the messages. The messages are first received in {@link SocketManagerService} and forwarded to every available handler
+     */
+    private ChatHandler mHandler;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +115,22 @@ public class ChatFragment extends Fragment {
         getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mBound) {
+            mBound = false;
+            mService.removeHandler(mHandler);
+            getActivity().unbindService(mConnection);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle bundle) {
+        super.onSaveInstanceState(bundle);
+        bundle.putStringArrayList(CHAT_KEY, mConversationArrayList);
+    }
+
     /**
      * Defines callbacks for service binding, passed to bindService()
      */
@@ -123,7 +144,6 @@ public class ChatFragment extends Fragment {
             mService = binder.getService();
             mBound = true;
             mService.addHandler(mHandler);
-
         }
 
         @Override
@@ -131,24 +151,6 @@ public class ChatFragment extends Fragment {
             mBound = false;
         }
     };
-
-    @Override
-    public void onSaveInstanceState(Bundle bundle) {
-        super.onSaveInstanceState(bundle);
-        bundle.putStringArrayList(CHAT_KEY, mConversationArrayList);
-    }
-
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (mBound) {
-            mService.removeHandler(mHandler);
-            getActivity().unbindService(mConnection);
-            mBound = false;
-        }
-
-    }
 
     /**
      * Sends a content.
@@ -158,8 +160,10 @@ public class ChatFragment extends Fragment {
     private void sendMessage(String message) {
         // Check that there's actually something to send
         if (!message.isEmpty()) {
-
             String targetName = null;
+            String deviceName = BluetoothManager.getName();
+            deviceName = SocketManagerService.format(deviceName);
+
             if (message.startsWith("\\w")) {
                 String[] splits = message.split("\"");
                 targetName = splits[1];
@@ -167,9 +171,6 @@ public class ChatFragment extends Fragment {
                 Log.e(LOG_TAG, "Split was: " +splits[2]);
                 Log.e(LOG_TAG, "Message was: " + message);
             }
-
-            String deviceName = BluetoothManager.getName();
-            deviceName = SocketManagerService.format(deviceName);
 
             if (mBound) {
                 if (targetName == null) {
@@ -191,11 +192,6 @@ public class ChatFragment extends Fragment {
             mConversationView.setSelection(mConversationArrayAdapter.getCount() - 1);
         }
     }
-
-    /**
-     * The Handler that gets the messages. The messages are first received in {@link SocketManagerService} and forwarded to every available handler
-     */
-    private ChatHandler mHandler;
 
     private static class ChatHandler extends Handler {
         final WeakReference<ArrayAdapter<String>> mConversationArrayAdapterWeakReference;
@@ -228,7 +224,6 @@ public class ChatFragment extends Fragment {
             } else {
                 mConversationArrayAdapterWeakReference.get().add("whisperFrom(" + deviceName + "): " + message);
             }
-
 
             Log.i(LOG_TAG, "Chat Handler end!");
         }

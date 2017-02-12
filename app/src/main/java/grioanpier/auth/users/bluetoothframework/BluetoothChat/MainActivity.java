@@ -42,17 +42,17 @@ import grioanpier.auth.users.bluetoothframework.SocketManagerService.SocketManag
 public class MainActivity extends Activity {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
-    private static final String sBluetoothManagerFragmentTag = "bluetoothmanager";
-    private static final String sPlaceholderFragmentTag = "localplaceholder";
     private boolean restored;
 
+    private static final String sBluetoothManagerFragmentTag = "bluetoothmanager";
     private BluetoothManager btManager;
+
+    private static final String sPlaceholderFragmentTag = "localplaceholder";
     private PlaceholderFragment frag;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(layout.activity_main_activity);
 
         //Finish the activity if there is no Bluetooth on the device.
@@ -141,7 +141,6 @@ public class MainActivity extends Activity {
         btManager.getAvailableDevices();
     }
 
-
     @Override
     public void onStop() {
         super.onStop();
@@ -190,7 +189,6 @@ public class MainActivity extends Activity {
                 bundle.putInt(bundleListViewPosition, mListViewPosition);
         }
 
-
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -202,50 +200,6 @@ public class MainActivity extends Activity {
                     devicesSet = new HashSet<>(devicesList);
                 else
                     devicesSet = new HashSet<>();
-            }
-        }
-
-        @Override
-        public void onStart() {
-            super.onStart();
-            // Bind to SocketManagerService
-            Intent intent = new Intent(getActivity(), SocketManagerService.class);
-            getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        }
-
-        public void onStop(){
-            super.onStop();
-            getActivity().unbindService(mConnection);
-        }
-
-        /**
-         * Defines callbacks for service binding, passed to bindService()
-         */
-        private final ServiceConnection mConnection = new ServiceConnection() {
-
-            @Override
-            public void onServiceConnected(ComponentName className,
-                                           IBinder service) {
-                // We've bound to LocalService, cast the IBinder and get LocalService instance
-                SocketManagerServiceBinder binder = (SocketManagerServiceBinder) service;
-                mService = binder.getService();
-                mBound = true;
-
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName arg0) {
-                mBound = false;
-            }
-        };
-
-        @Override
-        public void onResume() {
-
-            super.onResume();
-            if (mListViewPosition != ListView.INVALID_POSITION) {
-                listView.smoothScrollToPosition(mListViewPosition);
-                listView.setSelection(mListViewPosition);
             }
         }
 
@@ -336,6 +290,48 @@ public class MainActivity extends Activity {
             return rootView;
         }
 
+        @Override
+        public void onStart() {
+            super.onStart();
+            // Bind to SocketManagerService
+            Intent intent = new Intent(getActivity(), SocketManagerService.class);
+            getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            if (mListViewPosition != ListView.INVALID_POSITION) {
+                listView.smoothScrollToPosition(mListViewPosition);
+                listView.setSelection(mListViewPosition);
+            }
+        }
+
+        @Override
+        public void onStop(){
+            super.onStop();
+            getActivity().unbindService(mConnection);
+        }
+
+        /**
+         * Defines callbacks for service binding, passed to bindService()
+         */
+        private final ServiceConnection mConnection = new ServiceConnection() {
+
+            @Override
+            public void onServiceConnected(ComponentName className,
+                                           IBinder service) {
+                // We've bound to LocalService, cast the IBinder and get LocalService instance
+                SocketManagerServiceBinder binder = (SocketManagerServiceBinder) service;
+                mService = binder.getService();
+                mBound = true;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName arg0) {
+                mBound = false;
+            }
+        };
 
         public void refresh() {
             if (mBound) {
@@ -344,14 +340,11 @@ public class MainActivity extends Activity {
             grioanpier.auth.users.bluetoothframework.BluetoothManager.refreshUUIDs();
         }
 
-
         private void join() {
             Intent intent = new Intent(getActivity(), ChatRoom.class);
             grioanpier.auth.users.bluetoothframework.BluetoothManager.DEVICE_TYPE = grioanpier.auth.users.bluetoothframework.BluetoothManager.PLAYER;
             startActivity(intent);
         }
-
-
 
         private void host() {
             if (mBound) {
@@ -375,6 +368,7 @@ public class MainActivity extends Activity {
 
         public void setDevicesList(Set<BluetoothDevice> list) {
             String string;
+
             for (BluetoothDevice device : list) {
                 string = device.getName() + "\n" + device.getAddress();
                 if (devicesSet.add(string)) {
@@ -385,6 +379,7 @@ public class MainActivity extends Activity {
 
         public void addDeviceInList(BluetoothDevice device) {
             String string = device.getName() + "\n" + device.getAddress();
+
             if (devicesSet.add(string)) {
                 devicesAdapter.add(string);
             }

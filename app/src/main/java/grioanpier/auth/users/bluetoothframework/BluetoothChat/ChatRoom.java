@@ -45,6 +45,7 @@ public class ChatRoom extends Activity {
     private BluetoothManager btManager;
     private static final String sBluetoothManagerFragmentTag = "bluetoothManager";
 
+    private ActivityHandler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +71,33 @@ public class ChatRoom extends Activity {
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(string.ensure_discoverable);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        String title = item.getTitle().toString();
+
+        if (title.equals(getString(string.ensure_discoverable))) {
+            btManager.ensureDiscoverable();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle bundle) {
+        super.onSaveInstanceState(bundle);
+        bundle.putBoolean(hasPromptedDiscoverableString, hasPromptedDiscoverable);
+
+    }
 
     @Override
     public void onStart() {
@@ -117,6 +145,16 @@ public class ChatRoom extends Activity {
         }
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mBound) {
+            mBound = false;
+            mService.removeHandler(mHandler);
+            unbindService(mConnection);
+        }
+    }
+
     /**
      * Defines callbacks for service binding, passed to bindService()
      */
@@ -138,45 +176,6 @@ public class ChatRoom extends Activity {
         }
     };
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (mBound) {
-            mBound = false;
-            mService.removeHandler(mHandler);
-            unbindService(mConnection);
-
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(string.ensure_discoverable);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        String title = item.getTitle().toString();
-
-        if (title.equals(getString(string.ensure_discoverable))) {
-            btManager.ensureDiscoverable();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle bundle) {
-        super.onSaveInstanceState(bundle);
-        bundle.putBoolean(hasPromptedDiscoverableString, hasPromptedDiscoverable);
-
-    }
-
     private void serverListenForConnections() {
         btManager.setServerListenForConnectionsListener(new ServerListenForConnectionsListener() {
             @Override
@@ -190,9 +189,6 @@ public class ChatRoom extends Activity {
         btManager.serverListenForConnections(true);
 
     }
-
-
-    private ActivityHandler mHandler;
 
     public static class ActivityHandler extends Handler {
         private final WeakReference<ChatRoom> contextWeakReference;
@@ -218,7 +214,6 @@ public class ChatRoom extends Activity {
             }
         }
     }
-
 
     public static class PlaceholderFragment extends Fragment {
 
@@ -261,7 +256,6 @@ public class ChatRoom extends Activity {
                     mMacTextView.setVisibility(View.GONE);
                     break;
             }
-
         }
 
         @Override
