@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp"
+    android:background="@drawable/bluetooths"
     tools:context="grioanpier.auth.users.bluetoothframework.bluetoothChat.ChatRoom$PlaceholderFragment"
     >
 
@@ -12,7 +12,8 @@
         android:text="@string/hostgame_button"
         android:id="@+id/hostgame_button"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        style="@style/myButtonsStyle"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -38,6 +39,7 @@
             android:text="@string/join_button"
             android:id="@+id/join_button"
             android:layout_weight="1"
+            style="@style/myButtonsStyle"
             />
 
 
@@ -47,6 +49,7 @@
             android:text="@string/refresh_button"
             android:id="@+id/refresh_button"
             android:layout_weight="1"
+            style="@style/myButtonsStyle"
             />
 
     </LinearLayout>

@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="grioanpier.auth.users.movies.LocalGame">
+xmlns:tools="http://schemas.android.com/tools"
+tools:context="grioanpier.auth.users.movies.LocalGame">
 
-    <item android:id="@+id/ensure_discoverable" android:title="@string/ensure_discoverable"
-        android:orderInCategory="100" android:showAsAction="never" />
+<item android:id="@+id/ensure_discoverable" android:title="@string/ensure_discoverable"
+    android:orderInCategory="100" android:showAsAction="never" />
 </menu>

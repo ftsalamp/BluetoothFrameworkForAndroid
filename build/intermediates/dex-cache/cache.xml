@@ -7,7 +7,7 @@
         jumboMode="true"
         optimize="true"
         revision="24.0.3"
-        sha1="5de249edb00f2db862da95f46a7ceef7a5875211">
+        sha1="f7758c64806932473afcc4aa2fa49979b8994d73">
         <dex dex="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_b6c3124ee4218b6e87fb0b180d89c9421b2da63e\classes.dex" />
     </item>
     <item
@@ -16,7 +16,7 @@
         jumboMode="true"
         optimize="true"
         revision="24.0.3"
-        sha1="f346fc9f45a73c8ee6b192f7c7e45e05e32c8205">
+        sha1="d215897d1f82b87b07ccaf3c4cd1832d06c220c3">
         <dex dex="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_9cedea13ef684d9ff016482317f435d989dbcec4\classes.dex" />
     </item>
 
