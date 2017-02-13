@@ -51,7 +51,7 @@ public class ChatRoom extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(layout.activity_chat_room);
-
+        getWindow().setBackgroundDrawableResource(R.drawable.chat);
         //This fragment has been statically added inside the activity's xml!
         waitingScreenFragment = (PlaceholderFragment) getFragmentManager().findFragmentById(id.waiting_screen_fragment);
         waitingScreenFragment.setUserVisibleHint(false);

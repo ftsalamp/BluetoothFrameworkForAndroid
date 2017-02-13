@@ -2,9 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="grioanpier.auth.users.bluetoothframework.bluetoothChat.ChatRoom$PlaceholderFragment"
+    tools:context="grioanpier.auth.users.bluetoothframework.bluetoothChat.ChatRoom"
     android:orientation="vertical"
-    android:background="@drawable/chat"
     >
     <fragment
         android:id="@+id/waiting_screen_fragment"
