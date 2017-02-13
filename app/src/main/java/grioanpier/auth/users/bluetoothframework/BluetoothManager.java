@@ -16,7 +16,6 @@ import android.content.Loader;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -33,7 +32,6 @@ import grioanpier.auth.users.bluetoothframework.loaders.ConnectTaskLoader;
  */
 public class BluetoothManager extends Fragment {
 
-    private static final String LOG_TAG = BluetoothManager.class.getSimpleName();
     private static final int ACCEPT_LOADER = 0;
     private static final int CONNECT_LOADER = 1;
 
@@ -144,7 +142,7 @@ public class BluetoothManager extends Fragment {
     }
 
     //Request that Bluetooth is enabled
-    public void ensureEnabled() {
+    public void enableBluetooth() {
         if (mBluetoothAdapter.isEnabled()) {
             if (bluetoothRequestEnableListener != null)
                 bluetoothRequestEnableListener.onEnabled();
@@ -286,7 +284,6 @@ public class BluetoothManager extends Fragment {
 
                         }
                     } else {
-                        Log.e(LOG_TAG, "serverListenForConnections finished with a null socket");
                         serverListenForConnectionsListener.onConnectionEstablished(false, null);
                         onConnectionEstablished(false);
                     }
@@ -352,36 +349,20 @@ public class BluetoothManager extends Fragment {
         //Attempts to connect to the device.
         public void onLoadFinished(Loader<BluetoothSocket> loader, BluetoothSocket btSocket) {
             DEVICE_TYPE = PLAYER;
-            Log.e(LOG_TAG, "ConnectTaskLoader finished");
             if (btSocket != null) {
                 String name = btSocket.getRemoteDevice().getName();
-                Log.e(LOG_TAG, "Connected to " + name);
-
                 if (connectListener != null) {
-                    Log.e(LOG_TAG, "connectListener NOT null");
                     connectListener.onConnected(true, name);
-                } else {
-                    Log.e(LOG_TAG, "connectListener NULL");
                 }
-
                 if (mBound) {
-                    Log.e(LOG_TAG, "Service was bound");
                     mService.setHostSocket(btSocket);
-                } else {
-                    Log.e(LOG_TAG, "Host Socket couldn't be bound to the SocketManagerService!");
                 }
-
             } else {
-                Log.e(LOG_TAG, "BluetoothSocket was null");
                 if (connectListener != null) {
-                    Log.e(LOG_TAG, "connectListener NOT null");
                     connectListener.onConnected(false, null);
-                } else {
-                    Log.e(LOG_TAG, "connectListener NULL");
                 }
             }
         }
-
         @Override
         public void onLoaderReset(Loader<BluetoothSocket> loader) {
         }

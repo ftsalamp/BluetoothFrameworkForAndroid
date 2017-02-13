@@ -7,7 +7,6 @@ package grioanpier.auth.users.bluetoothframework;
  */
 
 public class BluetoothMessage {
-    private final static String LOG_TAG = BluetoothManager.class.getSimpleName();
 
     public Boolean isGlobal=null;
     public String targetMAC=null;

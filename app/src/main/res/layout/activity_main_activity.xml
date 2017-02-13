@@ -1,7 +1,70 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bluetooth"
     tools:context="grioanpier.auth.users.bluetoothframework.bluetoothChat.MainActivity"
-    tools:ignore="MergeRootFrame" />
+    >
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/hostgame_button"
+        android:id="@+id/hostgame_button"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        style="@style/myButtonsStyle"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/select_host_device"
+        android:id="@+id/select_hosts_device"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/hostgame_button"
+        android:orientation="horizontal"
+        android:id="@+id/join_refresh_buttons"
+        android:weightSum="2">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/join_button"
+            android:id="@+id/join_button"
+            android:layout_weight="1"
+            style="@style/myButtonsStyle"
+            />
+
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/refresh_button"
+            android:id="@+id/refresh_button"
+            android:layout_weight="1"
+            style="@style/myButtonsStyle"
+            />
+
+    </LinearLayout>
+
+
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/pairedDevicesList"
+        android:layout_below="@id/select_hosts_device"
+        android:layout_above="@id/join_refresh_buttons"
+        android:dividerHeight="0dp"
+        android:listSelector="@color/transparent"
+        />
+
+
+</RelativeLayout>
