@@ -188,7 +188,7 @@ public class BluetoothManager extends Fragment {
     /**
      * Begins searching for nearby bluetooth devices.
      */
-    public void getAvailableDevices() {
+    public void discoverDevices() {
         if (mBluetoothAdapter.isDiscovering())
             return;
 

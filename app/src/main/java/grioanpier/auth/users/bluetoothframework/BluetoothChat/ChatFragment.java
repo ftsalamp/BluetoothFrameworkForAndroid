@@ -9,26 +9,22 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import grioanpier.auth.users.bluetoothframework.BluetoothManager;
-import grioanpier.auth.users.bluetoothframework.R;
 import grioanpier.auth.users.bluetoothframework.R.id;
 import grioanpier.auth.users.bluetoothframework.R.layout;
 import grioanpier.auth.users.bluetoothframework.SocketManagerService;
@@ -38,7 +34,6 @@ public class ChatFragment extends Fragment {
     private static final int CHAT_GLOBAL = 4;
     private static final int CHAT_PRIVATE = 5;
 
-    private static final String LOG_TAG = ChatFragment.class.getSimpleName();
     private SocketManagerService mService;
     private boolean mBound = false;
 
@@ -168,8 +163,6 @@ public class ChatFragment extends Fragment {
                 String[] splits = message.split("\"");
                 targetName = splits[1];
                 message = splits[2].trim();
-                Log.e(LOG_TAG, "Split was: " +splits[2]);
-                Log.e(LOG_TAG, "Message was: " + message);
             }
 
             if (mBound) {
@@ -202,15 +195,12 @@ public class ChatFragment extends Fragment {
 
         @Override
         public void handleMessage(Message msg) {
-            Log.i(LOG_TAG, "Chat Handler start!");
 
             if ((msg.what != CHAT_GLOBAL) && (msg.what != CHAT_PRIVATE)) {
-                Log.i(LOG_TAG, "This isn't for me");
+                //This isn't a chat message, ignore it.
                 return;
             }
-
             String message = (String) msg.obj;
-            Log.i(LOG_TAG, message);
 
             //Extract the device name
             int length = SocketManagerService.deformat(message);
@@ -225,9 +215,8 @@ public class ChatFragment extends Fragment {
                 mConversationArrayAdapterWeakReference.get().add("whisperFrom(" + deviceName + "): " + message);
             }
 
-            Log.i(LOG_TAG, "Chat Handler end!");
         }
     }
 
 
-}//Fragment
+}

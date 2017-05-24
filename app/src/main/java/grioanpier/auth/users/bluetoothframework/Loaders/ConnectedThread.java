@@ -2,7 +2,6 @@ package grioanpier.auth.users.bluetoothframework.loaders;
 
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +12,6 @@ import java.io.OutputStream;
  * It's also the point of communication.
  */
 public class ConnectedThread extends Thread {
-    private static final String LOG_TAG = ConnectedThread.class.getSimpleName();
 
     private final BluetoothSocket mSocket;
     private final InputStream mInStream;
@@ -80,10 +78,6 @@ public class ConnectedThread extends Thread {
         try {
             mOutStream.write(buffer);
         } catch (IOException e) {
-            Log.v(LOG_TAG, "IO Exception! While writing in ConnectedThread");
-            e.printStackTrace();
-        } catch (Exception e) {
-            Log.v(LOG_TAG, "Other Exception! While writing in ConnectedThread");
             e.printStackTrace();
         }
     }

@@ -15,8 +15,6 @@ import java.util.UUID;
  */
 public class AcceptTaskLoader extends AsyncTaskLoader<BluetoothSocket> {
 
-    private final static String LOG_TAG = AcceptTaskLoader.class.getSimpleName();
-
     private final UUID mUUID;
     private final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private BluetoothServerSocket mBtServerSocket;

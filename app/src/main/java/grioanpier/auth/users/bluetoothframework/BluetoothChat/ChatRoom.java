@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,7 +33,6 @@ import grioanpier.auth.users.bluetoothframework.SocketManagerService.SocketManag
 
 public class ChatRoom extends Activity {
 
-    private static final String LOG_TAG = ChatRoom.class.getSimpleName();
     private SocketManagerService mService;
     private boolean mBound = false;
 
@@ -96,7 +94,6 @@ public class ChatRoom extends Activity {
     public void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
         bundle.putBoolean(hasPromptedDiscoverableString, hasPromptedDiscoverable);
-
     }
 
     @Override
@@ -125,7 +122,7 @@ public class ChatRoom extends Activity {
 
                     }
                 });
-                btManager.ensureEnabled();
+                btManager.enableBluetooth();
 
                 //Prompt the user to make the device discoverable
                 btManager.setBluetoothRequestDiscoverableListener(new BluetoothRequestDiscoverableListener() {
@@ -187,7 +184,6 @@ public class ChatRoom extends Activity {
             }
         });
         btManager.serverListenForConnections(true);
-
     }
 
     public static class ActivityHandler extends Handler {
@@ -201,11 +197,8 @@ public class ChatRoom extends Activity {
 
         @Override
         public synchronized void handleMessage(Message msg) {
-            Log.e(LOG_TAG, "msg.what " + msg.what);
             switch (msg.what) {
                 case SocketManagerService.THREAD_DISCONNECTED:
-
-
                     Toast.makeText(contextWeakReference.get(), msg.obj + " disconnected", Toast.LENGTH_SHORT).show();
                     waitingScreenFragment.get().playersJoinedDecrement();
                     break;
@@ -219,7 +212,6 @@ public class ChatRoom extends Activity {
 
         private TextView mPlayersJoinedTextView;
         private TextView mMacTextView;
-        private final String LOG_TAG = ChatFragment.class.getSimpleName();
         private int mPlayersJoined = 1;
         private static final String PLAYERS_IN_ROOM = "players in room";
         private static final int MAC_DISPLAYED = string.your_mac_is;
