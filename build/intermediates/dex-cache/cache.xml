@@ -2,22 +2,22 @@
 <items version="2" >
 
     <item
-        is-multidex="true"
+        is-multidex="false"
         jar="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
         jumboMode="true"
         optimize="true"
         revision="24.0.3"
-        sha1="f7758c64806932473afcc4aa2fa49979b8994d73">
-        <dex dex="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_b6c3124ee4218b6e87fb0b180d89c9421b2da63e\classes.dex" />
+        sha1="e8ae166733c86a548debb2b0865cfe6850665729">
+        <dex dex="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\pre-dexed\debug\instant-run_b6c3124ee4218b6e87fb0b180d89c9421b2da63e.jar" />
     </item>
     <item
-        is-multidex="true"
+        is-multidex="false"
         jar="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
         jumboMode="true"
         optimize="true"
         revision="24.0.3"
-        sha1="d215897d1f82b87b07ccaf3c4cd1832d06c220c3">
-        <dex dex="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_9cedea13ef684d9ff016482317f435d989dbcec4\classes.dex" />
+        sha1="5bfaf7e8ab663e8c0ecea2de14f7c874a8ca715e">
+        <dex dex="C:\Users\Ioannis\Documents\Programming\AndroidStudioProjects\BluetoothFramework\app\build\intermediates\pre-dexed\debug\instant-run-bootstrap_9cedea13ef684d9ff016482317f435d989dbcec4.jar" />
     </item>
 
 </items>
