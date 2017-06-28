@@ -8,30 +8,34 @@
 * Send String messages.
 
 #How it works
-One device takes up the role of the host. The other devices connect to the host. Behind the scenes, every message is sent to the host who appropriately forwards it.  
+
+One device takes up the role of the host. The other devices connect to the host. Behind the scenes, every message is sent to the host who appropriately forwards it. A message can be be sent to all devices connected to the host (global message) or to a single device
 
 #How to use
-1) Add BluetoothManager to your activity.
+1) Add [BluetoothManager](./app/src/main/java/grioanpier/auth/users/bluetoothframework/BluetoothManager.java) fragment to your activity.
 ```java
+private BluetoothManager bluetoothManager; //field declaration
 @Override
 protected void onCreate(Bundle savedInstanceState) {
   super.onCreate(savedInstanceState);
   if (savedInstanceState == null) {
-    getFragmentManager().beginTransaction()
-    .add(new BluetoothManager(), "Bluetooth Manager Tag")
+  bluetoothManager = new BluetoothManager(); //create a new BluetoothManager object
+    getFragmentManager().beginTransaction() //Add it to the activity
+    .add(bluetoothManager, "Bluetooth Manager Tag")
     .commit();
   }
 }
 ```
-2)Use BluetoothManager to be discovered/discover other nearby devices.
+2)Use [BluetoothManager](./app/src/main/java/grioanpier/auth/users/bluetoothframework/BluetoothManager.java) to be discovered/discover other nearby devices.
 ```java
 //Discover other devices
 bluetoothManager.ensureDiscoverable(); //The device is now discoverable by other devices
-//Be discovered
-bluetoothManager.setBluetoothGetAvailableDevicesListener(new BluetoothGetAvailableDevicesListener() { //Set the listener
+
+//Be discovered. First set the listener
+bluetoothManager.setBluetoothGetAvailableDevicesListener(new BluetoothGetAvailableDevicesListener() {
   @Override
   public void onDeviceFound(BluetoothDevice device) { //A device was found.
-    addDeviceInList(device);
+    addDeviceInList(device); //In this case, when we find a device we want to add in a list with nearby devices.
   }
 });
 bluetoothManager.getAvailableDevices(); //Start searching for other devices. 
@@ -104,9 +108,9 @@ public void onStop() {
 5)Send messages
 ```java
 //Global message, to every device, including the sending device.
- mService.sendGlobalMessage(message, appCode); //int appCode is user defined.
+ mService.sendGlobalMessage(message, appCode); //int appCode is user defined use it to distinguish your messages (chat, control etc).
 
-//Private message, send only to the specified device.
+//Private message, sent only to the specified device.
 String targetMAC = mService.getMAC(targetName); //Gets the MAC from the list of connected devices.
 if (targetMAC == null) { //If the device isn't the host, getMAC will return null
     mService.sendPrivateMessage(message, targetName, CHAT_PRIVATE); //The host will search for the correct device.
