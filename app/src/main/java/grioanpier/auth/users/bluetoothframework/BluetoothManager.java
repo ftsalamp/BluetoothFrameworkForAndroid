@@ -389,9 +389,6 @@ public class BluetoothManager extends Fragment {
             return sAvailableUUIDs.get(0);
     }
 
-    /**
-     * @return true if there was something to remove, false otherwise.
-     */
     private void removeNextUUID() {
         if (!sAvailableUUIDs.isEmpty()) {
             sAvailableUUIDs.remove(0);

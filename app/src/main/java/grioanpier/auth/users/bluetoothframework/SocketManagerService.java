@@ -167,6 +167,14 @@ public class SocketManagerService extends Service {
         sendMessage(message, "null", appCode, true);
     }
 
+    /**
+     * Sends the content to a specific device that is connected to the host (including the host). Only the host knows the MAC addresses
+     * of all the connected devices. The rest devices can just use the target's name and the host will handle the lookup.
+     * TODO: what happens if there are 2 devices with the same name?
+     * @param message the content to send
+     * @param target the target device's MAC address or public name.
+     * @param appCode the appCode of the content. It states what part of the app the content comes from. For example {BLUETOOTH_CHAT}.
+     */
     public void sendPrivateMessage(String message, String target, int appCode) {
         sendMessage(message, target, appCode, false);
     }
